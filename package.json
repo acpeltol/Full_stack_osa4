@@ -1,0 +1,33 @@
+{
+  "name": "osa3_fullstack",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acpeltol/Full_stack_puhelinluettelo_osa3.git"
+  },
+  "keywords": [
+    "123"
+  ],
+  "author": "Arni Peltola",
+  "license": "UNLICENCED",
+  "bugs": {
+    "url": "https://github.com/acpeltol/Full_stack_puhelinluettelo_osa3/issues"
+  },
+  "homepage": "https://github.com/acpeltol/Full_stack_puhelinluettelo_osa3#readme",
+  "description": "",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "cross": "^1.0.0",
+    "express": "^4.21.1",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}
