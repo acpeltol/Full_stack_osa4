@@ -4,10 +4,10 @@ const cors = require('cors')
 const app = express()
 
 app.use(express.json())
-
 app.use(morgan('tiny'))
-
 app.use(cors())
+app.use(express.static('dist'))
+
 
 let persons = [
   { 
@@ -80,8 +80,6 @@ let persons = [
       }else{
 
         persons = persons.concat(note)
-
-        console.log(persons)
         response.json(persons)
       }}
       
@@ -91,12 +89,29 @@ let persons = [
       }
   })
 
+  app.put('/api/persons/:id', (request, response) =>{
+    const id = request.params.id
+
+    const data = request.body
+
+    const namen = persons.find(person => person.id === id)
+
+    if (namen){
+      namen.number = data.number
+
+      console.log("hier gud")
+      response.json(persons)
+    }
+
+  })
+
   app.delete('/api/persons/:id', (request, response) => {
     console.log("Deleting")
     const id = request.params.id
+    const resp = persons.find(person => person.id === id)
     persons = persons.filter(person => person.id !== id)
   
-    response.status(204).end()
+    response.json(resp)
   })
   
   const PORT = process.env.PORT || 3001
