@@ -1,13 +1,30 @@
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
+require('dotenv').config()
 const app = express()
+
+const Phonebook = require('./models/phonebook')
+const phonebook = require('./models/phonebook')
 
 app.use(express.json())
 app.use(morgan('tiny'))
 app.use(cors())
 app.use(express.static('dist'))
 
+const errorHandler = (error, request, response, next) => {
+  console.error(error);
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' });
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message });
+  }
+  next(error); 
+};
+
+
+let length_of_phonebook;
 
 let persons = [
   { 
@@ -33,88 +50,107 @@ let persons = [
   ]
 
   app.get('/', (request, response) => {
-    response.send('<h1>Hello rlo!</h1>')
+    console.log("Nothing special in this page")
   })
   
   app.get('/api/persons', (request, response) => {
-    response.json(persons)
-  })
-
-  app.get('/api/persons/:id', (request, response) => {
-    const id = request.params.id
-    const note = persons.find(note => note.id === id)
-    
-    if (note) {
-      response.json(note)
-    } else {
-      response.status(404).end()
+    Phonebook.find({}).then(data => {
+      console.log(data)
+      length_of_phonebook = data.length
+      response.json(data)
+    })
     }
+  )
+
+  app.get('/api/persons/:id', (request, response, next) => {
+    Phonebook.findById(request.params.id)
+    .then(result => {
+      if (result){
+      response.send(result)}
+      else{
+        response.status(404).end()
+      }
+    }).catch(error =>
+      next(error)
+    )
   })
 
   app.get('/info', (request, response) => {
     const noe = new Date()
     console.log("hie gut")
-    response.send(`<h3>Phonebook has info for ${persons.length} people</h3>
+    response.send(`<h3>Phonebook has info for ${length_of_phonebook} people</h3>
         <p>${noe}</p>`)
   })
 
-  app.post('/api/persons', (request, response) => {
-      const note = request.body
-
-      console.log(note)
-
-      note.id = String(Math.floor(Math.random() * 1000000000))
-
-      if(note.name && note.number){
-
-      const namen = persons.find(person => person.name === note.name)
-
-      const nummet = persons.find(person => person.number === note.number)
-
-      console.log(namen)
-
-      if(namen){
-        response.status(404).send({ error: 'name must be unique' })
-      }else if(nummet){
-        response.status(404).send({ error: 'number must be unique' })
-      }else{
-
-        persons = persons.concat(note)
-        response.json(persons)
-      }}
+  app.post('/api/persons', (request, response, next) => {
       
-      else{
-        response.status(404).send({ error: 'you muat have name and number in your json data' })
+    const body = request.body
 
-      }
-  })
-
-  app.put('/api/persons/:id', (request, response) =>{
-    const id = request.params.id
-
-    const data = request.body
-
-    const namen = persons.find(person => person.id === id)
-
-    if (namen){
-      namen.number = data.number
-
-      console.log("hier gud")
-      response.json(persons)
+    if (body.name === undefined || body.number === undefined) {
+      return response.status(400).json({ error: 'content missing' })
     }
 
+    const note = new Phonebook({
+          name: body.name,
+          number: body.number,
+        })
+    
+    
+    note.save()
+    .then(data => {
+          console.log("Phonumber saved")
+    
+          console.log(data)
+    
+          length_of_phonebook = length_of_phonebook + 1
+          response.json(data)
+
+        }).catch(error => next(error))
   })
 
-  app.delete('/api/persons/:id', (request, response) => {
-    console.log("Deleting")
+
+
+
+
+  app.put('/api/persons/:id', (request, response, next) =>{
     const id = request.params.id
-    const resp = persons.find(person => person.id === id)
-    persons = persons.filter(person => person.id !== id)
-  
-    response.json(resp)
+
+    const body = request.body
+
+    console.log(id, " ",body)
+
+    //if (body.name === undefined || body.number === undefined) {
+    //  return response.status(400).json({ error: 'content missing' })
+    //}
+
+    Phonebook.findByIdAndUpdate(id, 
+      {number : body.number},
+      {new:true, runValidators :true, context: "query"})
+    .then(updated =>{
+      if(updated){
+      response.json(updated)}
+      else{
+        response.status(404).end()
+      }
+    }).catch(error => next(error))
   })
+
+
+// Delete the user
+
+  app.delete('/api/persons/:id', (request, response,next) => {
+    
+    Phonebook.findByIdAndDelete(request.params.id)
+    .then(result => {
+      console.log("Deleting")
+      length_of_phonebook = length_of_phonebook - 1
+      response.send(result)
+    }).catch(error => next(error))
+  })
+
+  app.use(errorHandler);
   
-  const PORT = process.env.PORT || 3001
+  const PORT = process.env.PORT
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
   })
