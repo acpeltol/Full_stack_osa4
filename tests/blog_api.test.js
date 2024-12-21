@@ -96,6 +96,7 @@ test.only('uptading is succesfull', async () => {
   const response = await api.get('/api/blogs')
   const update = response.body[1]
   update.likes = 10
+
   await api.put(`/api/blogs/${response.body[1].id}`)
     .send(update)
 
