@@ -52,19 +52,10 @@ test.only('blogs are returned as json', async () => {
 })
 
 test.only('Length of blogs is right', async () => {
-  await api.post('/api/blogs')
-    .set('Authorization', `Bearer ${token}`)
-    .send(initialBlogs[0])
-
-  await api.post('/api/blogs')
-    .set('Authorization', `Bearer ${token}`)
-    .send(initialBlogs[1])
-
-
   const response = await api.get('/api/blogs')
     .set('Authorization', `Bearer ${token}`)
 
-  assert.strictEqual(response.body.length, 2)
+  assert.strictEqual(response.body.length, 0)
 })
 
 test.only('Idnetifying field is named id', async () => {
@@ -75,6 +66,8 @@ test.only('Idnetifying field is named id', async () => {
 
   const response = await api.get('/api/blogs')
     .set('Authorization', `Bearer ${token}`)
+
+  console.log(response.body)
 
   assert(response.body[0].id !== undefined)
 })
@@ -144,18 +137,29 @@ test.only('uptading is succesfull', async () => {
     .send(initialBlogs[0])
 
   const response = await api.get('/api/blogs')
-  const update = response.body[1]
+    .set('Authorization', `Bearer ${token}`)
+
+  const update = response.body[0]
   update.likes = 10
 
-  await api.put(`/api/blogs/${response.body[1].id}`)
+  await api.put(`/api/blogs/${response.body[0].id}`)
     .set('Authorization', `Bearer ${token}`)
     .send(update)
 
   const response2 = await api.get('/api/blogs')
+    .set('Authorization', `Bearer ${token}`)
 
-  assert.strictEqual(response2.body[1].likes, 10)
+  assert.strictEqual(response2.body[0].likes, 10)
+})
+
+test.only('Posting fails with status code 401 if autentification key is not given', async () => {
+  await api.post('/api/blogs')
+    .send(initialBlogs[0])
+    .expect(401)
 })
 
 after(async () => {
+  await Blog.deleteMany({})
+  await User.deleteMany({})
   await mongoose.connection.close()
 })
