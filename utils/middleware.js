@@ -46,7 +46,6 @@ const tokenExtractor = (request, response, next) => {
     request.token = null
   }
 
-  console.log(request.token)
   next()
 }
 
